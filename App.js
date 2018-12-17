@@ -4,7 +4,6 @@ import { Button, List, ListItem } from 'react-native-elements';
 import LocationModal from './components/LocationModal';
 import Swipeout from 'react-native-swipeout';
 import { Constants } from 'expo';
-import Geocoder from 'react-native-geocoding';
 import { getDistanceFromLatLonInKm } from './helpers';
 
 // You can import from local files
@@ -13,7 +12,8 @@ import AssetExample from './components/AssetExample';
 // or any pure javascript modules available in npm
 import { Card } from 'react-native-paper';
 
-Geocoder.init('AIzaSyA5piMjNTfMzHqS7Ag7vtdtzMLN8xv6neI');
+const access_token =
+  'pk.eyJ1IjoiYWJvdWRpY2hlbmciLCJhIjoiY2pwc3B0cjNuMHZuOTQybWg4aDQzZTY3aiJ9.7kmPDh-Z0RQTNexDxB5aVA';
 
 export default class App extends React.Component {
   state = {
@@ -26,13 +26,14 @@ export default class App extends React.Component {
 
   componentDidMount() {
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      position => {
         this.setState({
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
         });
+        console.log(position);
       },
-      { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 },
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 }
     );
   }
 
@@ -42,20 +43,28 @@ export default class App extends React.Component {
 
   addLocation = location => {
     const { latitude, longitude } = this.state;
-    const distance = parseInt(getDistanceFromLatLonInKm(37.874643,32.493155, latitude, longitude ));
+    fetch(
+      `https://api.mapbox.com/geocoding/v5/mapbox.places/${location}.json?access_token=${access_token}`
+    )
+      .then(res => res.json())
+      .then(data => {
+        const long = data.features[0].center[0];
+        const lat = data.features[0].center[1];
 
-    console.log(distance)
+        const dist = getDistanceFromLatLonInKm(lat, long, latitude, longitude);
 
-    this.setState(prevState => ({
-      locations: [...prevState.locations, {name: location, distance}],
-    }));
+        let distance;
+        if (dist < 2) {
+          distance = parseInt(dist * 1000) + ' m';
+        } else {
+          distance = parseInt(dist) + ' km';
+        }
 
-    // Geocoder.from(location)
-    //   .then(json => {
-    //     var loc = json.results[0].geometry.location;
-        
-    //   })
-    //   .catch(error => console.warn(error));
+        console.log(distance);
+        this.setState(prevState => ({
+          locations: [...prevState.locations, { name: location, distance }],
+        }));
+      });
   };
 
   deleteItem = key => {
@@ -88,7 +97,11 @@ export default class App extends React.Component {
               ]}
               autoClose="true"
               backgroundColor="transparent">
-              <ListItem key={i} title={location.name} subtitle={`${location.distance} km`} />
+              <ListItem
+                key={i}
+                title={location.name}
+                subtitle={`${location.distance}`}
+              />
             </Swipeout>
           ))}
         </List>

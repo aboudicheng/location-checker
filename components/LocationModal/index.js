@@ -7,7 +7,7 @@ import {
   FormValidationMessage,
 } from 'react-native-elements';
 
-class LocationModal extends Component {
+export default class LocationModal extends Component {
   state = {
     locationField: '',
     errorMessage: '',
@@ -47,12 +47,19 @@ class LocationModal extends Component {
             <View style={{ width: '100%' }}>
               <FormLabel>Location</FormLabel>
               <FormInput onChangeText={this.handleLocationField} />
-              <FormValidationMessage>
-                {errorMessage}
-              </FormValidationMessage>
+              <FormValidationMessage>{errorMessage}</FormValidationMessage>
             </View>
             <View style={{ width: '100%' }}>
-              <Button title="Add" onPress={this.handleAddButton}>
+              <Button
+                title="Add"
+                onPress={this.handleAddButton}
+                style={styles.btnStyle}>
+                <Text>Hide Modal</Text>
+              </Button>
+              <Button
+                title="Cancel"
+                onPress={() => this.props.handleModal(!modalVisible)}
+                style={styles.btnStyle}>
                 <Text>Hide Modal</Text>
               </Button>
             </View>
@@ -72,6 +79,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#ecf0f1',
     padding: 15,
   },
+  btnStyle: {
+    margin: 8,
+  },
 });
-
-export default LocationModal;
